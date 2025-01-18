@@ -14,3 +14,5 @@ class TestHTMLNode(unittest.TestCase):
         node = HTMLNode("p", "the text", None, props = {"href": "https://www.htmlnode.net", "target": "_blank", "ping": "https://www.ping.net"})
         self.assertEqual(node.props_to_html(), ' href="https://www.htmlnode.net" target="_blank" ping="https://www.ping.net"')
         
+if __name__ == "__main__":
+    unittest.main()
