@@ -39,7 +39,7 @@ if __name__ == "__main__":
 
 class TestParentNode(unittest.TestCase):
     def test_none_tag(self):
-        node = ParentNode(None, children=[LeafNode("b", "Bold text")], props=None)
+        node = ParentNode(None, [LeafNode("b", "Bold text")], props=None)
         with self.assertRaises(ValueError):
             node.to_html()
             
