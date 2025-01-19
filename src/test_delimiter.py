@@ -3,6 +3,11 @@ from delimiter import InvalidMarkdownSyntaxError, split_nodes_delimiter
 from textnode import TextNode, TextType
 
 class TestDelimiter(unittest.TestCase):
+    def test_delimiter_empty(self):
+        old_nodes = [TextNode("This is text with an *italic delimiter*", TextType.TEXT)]
+        with self.assertRaises(ValueError):
+            split_nodes_delimiter(old_nodes, "", TextType.ITALIC)
+    
     def test_delimiter_italic(self):
         old_nodes = [TextNode("This is text with an *italic delimiter*", TextType.TEXT)]
         expected_nodes = split_nodes_delimiter(old_nodes, "*", TextType.ITALIC)

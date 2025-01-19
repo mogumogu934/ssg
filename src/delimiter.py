@@ -4,7 +4,7 @@ class InvalidMarkdownSyntaxError(Exception):
     pass
 
 def split_nodes_delimiter(old_nodes, delimiter, text_type):
-    if not delimiter.strip():
+    if not delimiter:
         raise ValueError("Delimiter cannot be empty or whitespace")
     
     new_nodes = []
