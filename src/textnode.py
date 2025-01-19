@@ -44,29 +44,12 @@ def text_node_to_html_node(text_node):
             raise Exception("invalid TextType")
 
 def extract_markdown_images(text):
-    alt_text_and_image_urls = re.findall(r"!\[(.*?)\]\(\w+\:\/\/(.*?)\)", text)
-    
-    alt_text = []
-    image_urls =[]
-    
-    for string_and_url in alt_text_and_image_urls:
-        end_of_alt_string_index = string_and_url.index("]")
-        start_of_url_index = string_and_url.index("(") + 1
-        alt_text.append(string_and_url[2:end_of_alt_string_index])
-        image_urls.append(string_and_url[start_of_url_index:-1])
-        
-    return list(zip(alt_text, image_urls))
+    regex = r"!\[([^\[\]]*)\]\(([^\(\)]*)\)"
+    # re.findall returns a list of matches,
+    # where each match is a tuple of captured groups
+    # a captured group is a set of ()
+    return re.findall(regex, text)
 
 def extract_markdown_links(text):
-    anchor_text_and_image_urls = re.findall(r"\[(.*?)\]\(\w+\:\/\/(.*?)\)", text)
-    
-    anchor_text = []
-    image_urls =[]
-    
-    for string_and_url in anchor_text_and_image_urls:
-        end_of_anchor_string_index = string_and_url.index("]")
-        start_of_url_index = string_and_url.index("(") + 1
-        anchor_text.append(string_and_url[1:end_of_anchor_string_index])
-        image_urls.append(string_and_url[start_of_url_index:-1])
-        
-    return list(zip(anchor_text, image_urls))
+    regex = r"(?<!!)\[([^\[\]]*)\]\(([^\(\)]*)\)"
+    return re.findall(regex, text)
