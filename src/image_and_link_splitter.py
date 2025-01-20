@@ -30,8 +30,8 @@ def split_nodes_image(old_nodes):
             if sections[0]: # avoid empty strings
                 new_nodes.append(TextNode(sections[0], TextType.TEXT))
             
-            # add image alt text and link as a LINK node
-            new_nodes.append(TextNode(image_alt, TextType.LINK, image_link))
+            # add image alt text and link as an IMAGE node
+            new_nodes.append(TextNode(image_alt, TextType.IMAGE, image_link))
             
             # update the remaining text with the section after the image
             remaining_text = sections[1] if len(sections) > 1 else ""
@@ -45,6 +45,10 @@ def split_nodes_image(old_nodes):
 def split_nodes_link(old_nodes):
     new_nodes = []
     for node in old_nodes:
+        if node.text_type != TextType.TEXT:
+            new_nodes.append(node)
+            continue
+        
         remaining_text = node.text
         while True:
             extracted_links = extract_markdown_links(remaining_text)
@@ -67,7 +71,7 @@ def split_nodes_link(old_nodes):
             remaining_text = sections[1] if len(sections) > 1 else ""
             
         # add remaining text if there's still some left over after processing all images
-        if remaining_text.strip():
+        if remaining_text:
             new_nodes.append(TextNode(remaining_text, TextType.TEXT))
                   
     return new_nodes

@@ -26,15 +26,15 @@ class TestImageAndLinkSplitter(unittest.TestCase):
         result = split_nodes_image(old_nodes)
         expected = [
             TextNode("Check out this ", TextType.TEXT),
-            TextNode("cool image", TextType.LINK, "https://www.i.imgur.com/coolimage.png"),
+            TextNode("cool image", TextType.IMAGE, "https://www.i.imgur.com/coolimage.png"),
             TextNode("! Isn't it cool?", TextType.TEXT),
-            TextNode("okayu", TextType.LINK, "https://www.i.imgur.com/okayu.gif"),
+            TextNode("okayu", TextType.IMAGE, "https://www.i.imgur.com/okayu.gif"),
             TextNode("These are my favorite characters: ", TextType.TEXT),
-            TextNode("sakuya", TextType.LINK, "https://www.i.imgur.com/sakuya.jpeg"),
+            TextNode("sakuya", TextType.IMAGE, "https://www.i.imgur.com/sakuya.jpeg"),
             TextNode(" and ", TextType.TEXT),
-            TextNode("remilia", TextType.LINK, "https://www.i.imgur.com/remilia.png"),
+            TextNode("remilia", TextType.IMAGE, "https://www.i.imgur.com/remilia.png"),
             TextNode("Look at this ", TextType.TEXT),
-            TextNode("", TextType.LINK, "https://www.i.imgur.com/fluffycat.jpeg"),
+            TextNode("", TextType.IMAGE, "https://www.i.imgur.com/fluffycat.jpeg"),
             TextNode("Just text", TextType.TEXT),
         ]
         self.assertEqual(result, expected)

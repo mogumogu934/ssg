@@ -1,5 +1,5 @@
 import unittest
-from textnode import TextNode, TextType, text_node_to_html_node, extract_markdown_images, extract_markdown_links
+from textnode import TextNode, TextType, text_node_to_html_node, text_to_textnodes
 from htmlnode import HTMLNode, LeafNode, ParentNode
 
 class TestTextNode(unittest.TestCase):
@@ -57,5 +57,43 @@ class TestTextNode(unittest.TestCase):
         with self.assertRaises(Exception):
             text_node_to_html_node(text_node)
         
+    def test_text_to_textnodes(self):
+        text = "This is text with a **bold** word, an *italic* word, a `code block`, an ![image of a cat](https://i.imgur.com/cat.jpeg), and a [link](https://www.okayu.net)"
+        result = text_to_textnodes(text)
+        expected = [
+            TextNode("This is text with a ", TextType.TEXT),
+            TextNode("bold", TextType.BOLD),
+            TextNode(" word, an ", TextType.TEXT),
+            TextNode("italic", TextType.ITALIC),
+            TextNode(" word, a ", TextType.TEXT),
+            TextNode("code block", TextType.CODE),
+            TextNode(", an ", TextType.TEXT),
+            TextNode("image of a cat", TextType.IMAGE, "https://i.imgur.com/cat.jpeg"),
+            TextNode(", and a ", TextType.TEXT),
+            TextNode("link", TextType.LINK, "https://www.okayu.net"),
+        ]
+        self.assertEqual(result, expected)
+
+    def test_text_to_textnodes_empty_input(self):
+        text = ""
+        result = text_to_textnodes(text)
+        expected = []
+        self.assertEqual(result, expected)
+        
+    def test_text_to_textnodes_no_markdown(self):
+        text = "plain text"
+        result = text_to_textnodes(text)
+        expected = [TextNode("plain text", TextType.TEXT)]
+        self.assertEqual(result, expected)
+        
+    def test_text_to_textnodes_adjacent_markdown(self):
+        text = "**bold**__italic__"
+        result = text_to_textnodes(text)
+        expected = [
+            TextNode("bold", TextType.BOLD),
+            TextNode("italic", TextType.ITALIC), 
+        ]
+        self.assertEqual(result, expected)
+
 if __name__ == "__main__":
     unittest.main()
