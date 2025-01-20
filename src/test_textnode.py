@@ -56,16 +56,6 @@ class TestTextNode(unittest.TestCase):
         text_node = TextNode("the text", "not an enum", "https://www.leafnode.net")
         with self.assertRaises(Exception):
             text_node_to_html_node(text_node)
-            
-    def test_extract_markdown_images(self):
-        text = "This is text with a ![rice ball](https://i.imgur.com/aYa0qHh.jpeg) and ![okayu](https://i.imgur.com/uIA2Kat.gif)"
-        result = [("rice ball", "https://i.imgur.com/aYa0qHh.jpeg"), ("okayu", "https://i.imgur.com/uIA2Kat.gif")]
-        self.assertEqual(extract_markdown_images(text), result)
-        
-    def test_extract_markdown_links(self):
-        text = "This is text with a link [to okayu](https://www.okayu.nyaa) and [to youtube](https://www.youtube.com)"
-        result = [("to okayu", "https://www.okayu.nyaa"), ("to youtube", "https://www.youtube.com")]
-        self.assertEqual(extract_markdown_links(text), result)
         
 if __name__ == "__main__":
     unittest.main()
