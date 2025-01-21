@@ -1,6 +1,6 @@
 import unittest
 from htmlnode import HTMLNode
-from markdown import markdown_to_blocks, block_to_block_type, markdown_to_html_node
+from markdown import markdown_to_blocks, block_to_block_type, markdown_to_html_node, text_to_children
 
 class TestMarkdown(unittest.TestCase):
     def test_markdown_to_blocks(self):
@@ -61,6 +61,24 @@ class TestMarkdown(unittest.TestCase):
                 HTMLNode("li", "Item 2"),
     ])
 ])
+        self.assertEqual(result, expected)
+        
+    def test_text_to_children(self):
+        text = "This is a paragraph of text with **bold** and *italic* elements, with `code`, ![an image of an iguana](https://www.i.imgur.com/iguana.jpeg), and a link to a [quail](https://www.quail.net)."
+        result = text_to_children(text)
+        expected = [
+            HTMLNode("text", "This is a paragraph of text with "),
+            HTMLNode("b", "bold"),
+            HTMLNode("text", " and "),
+            HTMLNode("i", "italic"),
+            HTMLNode("text", " elements, with "),
+            HTMLNode("code", "code"),
+            HTMLNode("text", ", "),
+            HTMLNode("image", "", {"alt": "an image of an iguana", "url": "https://www.i.imgur.com/iguana.jpeg"}),
+            HTMLNode("text", ", and a link to a "),
+            HTMLNode("link", "quail", {"url": "https://www.quail.net"}),
+            HTMLNode("text", "."),
+        ]
         self.assertEqual(result, expected)
         
 if __name__ == "__main__":
