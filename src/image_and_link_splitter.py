@@ -2,15 +2,15 @@ import re
 from textnode import TextNode, TextType
 
 def extract_markdown_images(text):
-    regex = r"!\[([^\[\]]*)\]\(([^\(\)]*)\)"
+    regex_image = r"!\[([^\[\]]*)\]\(([^\(\)]*)\)"
     # re.findall returns a list of matches,
     # where each match is a tuple of captured groups
     # a captured group is a set of () in regex
-    return re.findall(regex, text)
+    return re.findall(regex_image, text)
 
 def extract_markdown_links(text):
-    regex = r"(?<!!)\[([^\[\]]*)\]\(([^\(\)]*)\)"
-    return re.findall(regex, text)
+    regex_link = r"(?<!!)\[([^\[\]]*)\]\(([^\(\)]*)\)"
+    return re.findall(regex_link, text)
 
 def split_nodes_image(old_nodes):
     new_nodes = []

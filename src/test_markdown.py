@@ -1,7 +1,8 @@
 import unittest
-from block import markdown_to_blocks, block_to_block_type
+from htmlnode import HTMLNode
+from markdown import markdown_to_blocks, block_to_block_type, markdown_to_html_node
 
-class TestBlock(unittest.TestCase):
+class TestMarkdown(unittest.TestCase):
     def test_markdown_to_blocks(self):
         markdown = "# This is the heading\n\nThis is a paragraph of text that has **bold** and *italic* words in it.\n\n* First item\n* Second item\n* Third item\n\n"
         result = markdown_to_blocks(markdown)
@@ -43,6 +44,24 @@ class TestBlock(unittest.TestCase):
         result = block_to_block_type(markdown_block)
         expected = "PARAGRAPH"
         self.assertEqual(result, expected)
-
+        
+    def test_markdown_to_html_node(self):
+        markdown_document = "# Heading 1\n\n```\nCode block\n```\n\n>Quote\n\n* Item 1\n* Item 2\n\n1. Item 1\n2. Item 2"
+        result = markdown_to_html_node(markdown_document)
+        expected = HTMLNode("div", "", [
+            HTMLNode("h1", "Heading 1"),
+            HTMLNode("pre", "", [HTMLNode("code", "Code block")]),
+            HTMLNode("blockquote", "Quote"),
+            HTMLNode("ul", "", [
+                HTMLNode("li", "Item 1"),
+                HTMLNode("li", "Item 2")
+            ]),
+            HTMLNode("ol", "", [
+                HTMLNode("li", "Item 1"),
+                HTMLNode("li", "Item 2"),
+    ])
+])
+        self.assertEqual(result, expected)
+        
 if __name__ == "__main__":
     unittest.main()
