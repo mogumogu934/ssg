@@ -53,7 +53,7 @@ def markdown_to_html_node(markdown):
                 heading_text = match.group(2)
                 heading_level = len(hashes)
                 heading_tag = f"h{heading_level}"
-                children_nodes.append(HTMLNode(heading_tag, heading_text))       
+                children_nodes.append(HTMLNode(heading_tag, heading_text))
             
         elif block_to_block_type(block) == "CODE":
             match = re.match(r"^```\n([\s\S]*?)\n```$", block)
