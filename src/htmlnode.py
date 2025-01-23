@@ -32,7 +32,6 @@ class HTMLNode:
             self.props == other.props
         )
 
-
 class LeafNode(HTMLNode):
     def __init__(self, tag, value, props=None):
         super().__init__(tag=tag, value=value, children=None, props=props)
@@ -52,7 +51,6 @@ class LeafNode(HTMLNode):
                 strings.append(string)
             html_props = " ".join(strings)
         return f'<{self.tag}{" " + html_props if html_props else ""}>{self.value}</{self.tag}>'
-
 
 class ParentNode(HTMLNode):
     def __init__(self, tag, children, props=None):

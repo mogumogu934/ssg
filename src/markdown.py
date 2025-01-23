@@ -1,5 +1,6 @@
 import re
-from htmlnode import HTMLNode
+from textnode import TextType, text_to_textnodes
+from htmlnode import HTMLNode, LeafNode, ParentNode
 
 def markdown_to_blocks(markdown):
     blocks = list(map(str.strip, markdown.split("\n\n")))
@@ -9,8 +10,7 @@ def markdown_to_blocks(markdown):
 
 def block_to_block_type(markdown_block): 
     def is_heading_block(block):
-        regex_heading = r"^(#{1,6})\s"
-        return bool(re.match(regex_heading, block))
+        return block.startswith(("# ", "## ", "### ", "#### ", "#####", "###### "))
     
     def is_code_block(block):
         return block.startswith("```") and block.endswith("```")
@@ -19,7 +19,7 @@ def block_to_block_type(markdown_block):
         return all(line.startswith(">") for line in markdown_block.split("\n"))
         
     def is_unordered_list_block(block):
-        return all(line.strip().startswith(("-", "*", "+")) for line in markdown_block.split("\n"))
+        return all(line.strip().startswith(("- ", "* ", "+ ")) for line in markdown_block.split("\n"))
     
     def is_ordered_list_block(block):
         # A block is an ordered list if each line starts with '1.', '2.', ..., in order
@@ -42,6 +42,26 @@ def block_to_block_type(markdown_block):
     else:
         return "PARAGRAPH"
     
+def process_inline_text(text):
+    inline_nodes = []
+    text_nodes = text_to_textnodes(text)
+    
+    for text_node in text_nodes:
+        if text_node.text_type == TextType.TEXT:
+            inline_nodes.append(LeafNode(None, text_node.text))
+        elif text_node.text_type == TextType.BOLD:
+            inline_nodes.append(LeafNode("b", text_node.text))
+        elif text_node.text_type == TextType.ITALIC:
+            inline_nodes.append(LeafNode("i", text_node.text))
+        elif text_node.text_type == TextType.CODE:
+            inline_nodes.append(LeafNode("code", text_node.text))
+        elif text_node.text_type == TextType.LINK:
+            inline_nodes.append(LeafNode("a", text_node.text, props={"href": text_node.url}))
+        elif text_node.text_type == TextType.IMAGE:
+            inline_nodes.append(LeafNode("img", "", props={"src": text_node.url, "alt": text_node.text}))
+    
+    return inline_nodes
+
 def markdown_to_html_node(markdown):
     children_nodes = []
     
@@ -53,41 +73,44 @@ def markdown_to_html_node(markdown):
                 heading_text = match.group(2)
                 heading_level = len(hashes)
                 heading_tag = f"h{heading_level}"
-                children_nodes.append(HTMLNode(heading_tag, heading_text))
+                children_nodes.append(LeafNode(heading_tag, heading_text))
             
         elif block_to_block_type(block) == "CODE":
             match = re.match(r"^```\n([\s\S]*?)\n```$", block)
             if match:
                 code_content = match.group(1).strip()
-                children_nodes.append(HTMLNode("pre", "", [HTMLNode("code", code_content)]))
+                children_nodes.append(ParentNode("pre", [LeafNode("code", code_content)]))
 
         elif block_to_block_type(block) == "QUOTE":
             lines = block.split("\n")
             normalized_lines = [line.lstrip(">").strip() for line in lines]
-            quote_content = "\n".join(normalized_lines)  # Use "\n" to preserve formatting
-            children_nodes.append(HTMLNode("blockquote", quote_content))
+            quote_content = "\n".join(normalized_lines)
+            children_nodes.append(LeafNode("blockquote", quote_content))
 
         elif block_to_block_type(block) == "UNORDERED LIST":
             list_items = []
             for line in block.split("\n"):
                 if line.startswith(("-", "*", "+")):
-                    list_items.append(HTMLNode("li", line[2:]))
-            children_nodes.append(HTMLNode("ul", "", list_items))
+                    inline_nodes = process_inline_text(line[2:])
+                    inline_html = "".join(node.to_html() for node in inline_nodes)
+                    list_items.append(LeafNode("li", inline_html))
+            children_nodes.append(ParentNode("ul", list_items))
             
         elif block_to_block_type(block) == "ORDERED LIST":
             list_items = []
             for line in block.split("\n"):
-                if line[0].isdigit():
-                    match = re.match(r"^\d+\.\s", line)
-                    if match:
-                        list_item_text = line[match.end():]  # get text after match
-                        list_items.append(HTMLNode("li", list_item_text))
-            children_nodes.append(HTMLNode("ol", "", list_items))
+                if re.match(r"\d+\.", line):
+                    text = line[line.find(" ") + 1:]
+                    inline_nodes = process_inline_text(text)
+                    inline_html = "".join(node.to_html() for node in inline_nodes)
+                    list_items.append(LeafNode("li", inline_html))
+            children_nodes.append(ParentNode("ol", list_items))
             
         elif block_to_block_type(block) == "PARAGRAPH":
-            children_nodes.append(HTMLNode("p", block))
-            
-    return HTMLNode("div", "", children_nodes)
+            inline_nodes = process_inline_text(block)     
+            children_nodes.append(ParentNode("p", inline_nodes))
+
+    return ParentNode("div", children_nodes)
 
 def text_to_children(text):
     nodes = []
@@ -102,21 +125,21 @@ def text_to_children(text):
         # append any plain text before match
         if last_index < start:
             plain_text = text[last_index:start]
-            nodes.append(HTMLNode("text", plain_text))
+            nodes.append(LeafNode(None, plain_text))
             
         matched_text = match.group(0)
         
         if matched_text.startswith("**"):
             bold_content = matched_text.strip("**")
-            nodes.append(HTMLNode("b", bold_content))
+            nodes.append(LeafNode("b", bold_content))
             
         elif matched_text.startswith(("*", "_")):
             italic_content = matched_text[1:-1]
-            nodes.append(HTMLNode("i", italic_content))
+            nodes.append(LeafNode("i", italic_content))
             
         elif matched_text.startswith("`"):
             code_content = matched_text.strip("`")
-            nodes.append(HTMLNode("code", code_content))
+            nodes.append(LeafNode("code", code_content))
             
         elif matched_text.startswith("!"):
             alt_text, image_url = re.match(r"!\[([^\]]+)\]\(([^)]+)\)", matched_text).groups()
@@ -130,6 +153,6 @@ def text_to_children(text):
         
     # add any remaining plain text after last match
     if last_index < len(text):
-        nodes.append(HTMLNode("text", text[last_index:]))
+        nodes.append(LeafNode(None, text[last_index:]))
         
     return nodes
