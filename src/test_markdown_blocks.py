@@ -1,8 +1,8 @@
 import unittest
 from htmlnode import HTMLNode, LeafNode, ParentNode
-from markdown import markdown_to_blocks, block_to_block_type, process_inline_text, markdown_to_html_node, text_to_children
+from markdown_blocks import markdown_to_blocks, block_to_block_type, block_type_paragraph, block_type_heading, block_type_code, block_type_quote, block_type_ulist, block_type_olist, process_inline_text, markdown_to_html_node, text_to_children
 
-class TestMarkdown(unittest.TestCase):
+class TestMarkdownBlocks(unittest.TestCase):
     def test_markdown_to_blocks(self):
         markdown = "# This is the heading\n\nThis is a paragraph of text that has **bold** and *italic* words in it.\n\n* First item\n* Second item\n* Third item\n\n"
         result = markdown_to_blocks(markdown)
@@ -10,41 +10,42 @@ class TestMarkdown(unittest.TestCase):
         self.assertEqual(result, expected)
         
     def test_block_to_block_type_heading(self):
-        markdown_block = "#### title"
-        result = block_to_block_type(markdown_block)
-        expected = "HEADING"
+        block = "#### title"
+        result = block_to_block_type(block)
+        expected = block_type_heading
         self.assertEqual(result, expected)
         
     def test_block_to_block_type_code(self):
-        markdown_block = "```code```"
-        result = block_to_block_type(markdown_block)
-        expected = "CODE"
+        block = "```\ncode\n```"
+        result = block_to_block_type(block)
+        expected = block_type_code
         self.assertEqual(result, expected)
         
     def test_block_to_block_type_quote(self):
-        markdown_block = ">quote 1\n>quote 2\n>quote 3"
-        result = block_to_block_type(markdown_block)
-        expected = "QUOTE"
+        block = ">quote 1\n>quote 2\n>quote 3"
+        result = block_to_block_type(block)
+        expected = block_type_quote
         self.assertEqual(result, expected)
         
     def test_block_to_block_type_unordered_list(self):
-        markdown_block = "* First item\n* Second item\n* Third item"
-        result = block_to_block_type(markdown_block)
-        expected = "UNORDERED LIST"
+        block = "* First item\n* Second item\n* Third item"
+        result = block_to_block_type(block)
+        expected = block_type_ulist
         self.assertEqual(result, expected)
         
     def test_block_to_block_type_ordered_list(self):
-        markdown_block = "1. First item\n2. Second item\n3. Third item"
-        result = block_to_block_type(markdown_block)
-        expected = "ORDERED LIST"
+        block = "1. First item\n2. Second item\n3. Third item"
+        result = block_to_block_type(block)
+        expected = block_type_olist
         self.assertEqual(result, expected)
         
     def test_block_to_block_type_paragraph(self):
-        markdown_block = "This is a paragraph of text."
-        result = block_to_block_type(markdown_block)
-        expected = "PARAGRAPH"
+        block = "This is a paragraph of text."
+        result = block_to_block_type(block)
+        expected = block_type_paragraph
         self.assertEqual(result, expected)
-
+        
+class TestProcessInlineText(unittest.TestCase):
     def test_process_inline_text_plain_text(self):
         text = "This is plain text."
         output = process_inline_text(text)
@@ -92,6 +93,7 @@ class TestMarkdown(unittest.TestCase):
         self.assertEqual(output[0].props['src'], "https://example.com/image.png")
         self.assertEqual(output[0].props['alt'], "Alt text")
         
+class TestMarkDownToHTMLNode(unittest.TestCase):
     def test_markdown_to_html_node(self):
         markdown_document = "# Heading 1\n\n```\nCode block\n```\n\n>Quote\n\n* Item 1\n* Item 2\n\n1. Item 1\n2. Item 2"
         result = markdown_to_html_node(markdown_document)
@@ -110,6 +112,7 @@ class TestMarkdown(unittest.TestCase):
         ])
         self.assertEqual(result, expected)
         
+class TestTextToChildren(unittest.TestCase):
     def test_text_to_children(self):
         text = "This is a paragraph of text with **bold** and *italic* elements, with `code`, ![an image of an iguana](https://www.i.imgur.com/iguana.jpeg), and a link to a [quail](https://www.quail.net)."
         result = text_to_children(text)
@@ -127,12 +130,6 @@ class TestMarkdown(unittest.TestCase):
             LeafNode(None, "."),
         ]
         self.assertEqual(result, expected)
-        
-    def test_text_to_children_bold(self):
-        markdown = "**I like Tolkien**"
-        nodes = text_to_children(markdown)
-        html_fragment = "".join(node.to_html() for node in nodes)
-        print(html_fragment)
         
 if __name__ == "__main__":
     unittest.main()

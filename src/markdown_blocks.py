@@ -2,45 +2,61 @@ import re
 from textnode import TextType, text_to_textnodes
 from htmlnode import HTMLNode, LeafNode, ParentNode
 
+block_type_paragraph = "paragraph"
+block_type_heading = "heading"
+block_type_code = "code"
+block_type_quote = "quote"
+block_type_ulist = "unordered_list"
+block_type_olist = "ordered_list"
+
 def markdown_to_blocks(markdown):
-    blocks = list(map(str.strip, markdown.split("\n\n")))
-    filtered_blocks = list(filter(None, blocks))
+    blocks = list(map(str.strip, markdown.split("\n\n"))) # strip whitespace from lines
+    filtered_blocks = list(filter(None, blocks)) # remove empty blocks
     
     return filtered_blocks
 
-def block_to_block_type(markdown_block): 
-    def is_heading_block(block):
-        return block.startswith(("# ", "## ", "### ", "#### ", "#####", "###### "))
+def block_to_block_type(block):
+    lines = block.split("\n")
     
-    def is_code_block(block):
-        return block.startswith("```") and block.endswith("```")
+    if block.startswith(("# ", "## ", "### ", "#### ", "#####", "###### ")):
+        return block_type_heading
     
-    def is_quote_block(block):
-        return all(line.startswith(">") for line in markdown_block.split("\n"))
+    if len(lines) > 1 and lines[0].startswith("```") and lines[-1].endswith("```"):
+        return block_type_code
+    
+    if block.startswith(">"):
+        for line in lines:
+            if not line.startswith(">"):
+                return block_type_paragraph
+        return block_type_quote
         
-    def is_unordered_list_block(block):
-        return all(line.strip().startswith(("- ", "* ", "+ ")) for line in markdown_block.split("\n"))
+    if block.startswith("- "):
+        for line in lines:
+            if not line.startswith("- "):
+                return block_type_paragraph
+        return block_type_ulist
     
-    def is_ordered_list_block(block):
-        # A block is an ordered list if each line starts with '1.', '2.', ..., in order
-        lines = markdown_block.split("\n")
-        for i, line in enumerate(lines, start=1):
-            if not line.strip().startswith(f"{i}."):
-                return False
-        return True
-                
-    if is_code_block(markdown_block): # code must be first to avoid potential misclassification
-        return "CODE"
-    elif is_heading_block(markdown_block):
-        return "HEADING"
-    elif is_quote_block(markdown_block):
-        return "QUOTE"
-    elif is_unordered_list_block(markdown_block):
-        return "UNORDERED LIST"
-    elif is_ordered_list_block(markdown_block):
-        return "ORDERED LIST"
-    else:
-        return "PARAGRAPH"
+    if block.startswith("* "):
+        for line in lines:
+            if not line.startswith("* "):
+                return block_type_paragraph
+        return block_type_ulist
+    
+    if block.startswith("+ "):
+        for line in lines:
+            if not line.startswith("+ "):
+                return block_type_paragraph
+        return block_type_ulist
+    
+    if block.startswith("1. "):
+        i = 1
+        for line in lines:
+            if not line.startswith(f"{i}. "):
+                return block_type_paragraph
+            i += 1
+        return block_type_olist
+    
+    return block_type_paragraph
     
 def process_inline_text(text):
     inline_nodes = []
@@ -66,7 +82,7 @@ def markdown_to_html_node(markdown):
     children_nodes = []
     
     for block in markdown_to_blocks(markdown):
-        if block_to_block_type(block) == "HEADING":
+        if block_to_block_type(block) == block_type_heading:
             match = re.match(r"^(#{1,6})\s+(.*)", block)
             if match:
                 hashes = match.group(1)
@@ -75,28 +91,30 @@ def markdown_to_html_node(markdown):
                 heading_tag = f"h{heading_level}"
                 children_nodes.append(LeafNode(heading_tag, heading_text))
             
-        elif block_to_block_type(block) == "CODE":
+        elif block_to_block_type(block) == block_type_code:
             match = re.match(r"^```\n([\s\S]*?)\n```$", block)
             if match:
                 code_content = match.group(1).strip()
                 children_nodes.append(ParentNode("pre", [LeafNode("code", code_content)]))
 
-        elif block_to_block_type(block) == "QUOTE":
+        elif block_to_block_type(block) == block_type_quote:
+            stripped_lines = []
             lines = block.split("\n")
-            normalized_lines = [line.lstrip(">").strip() for line in lines]
-            quote_content = "\n".join(normalized_lines)
+            for line in lines:
+                stripped_lines.append(line.lstrip(">").strip())
+            quote_content = "\n".join(stripped_lines)
             children_nodes.append(LeafNode("blockquote", quote_content))
 
-        elif block_to_block_type(block) == "UNORDERED LIST":
+        elif block_to_block_type(block) == block_type_ulist:
             list_items = []
             for line in block.split("\n"):
-                if line.startswith(("-", "*", "+")):
+                if line.startswith(("- ", "* ", "+ ")):
                     inline_nodes = process_inline_text(line[2:])
                     inline_html = "".join(node.to_html() for node in inline_nodes)
                     list_items.append(LeafNode("li", inline_html))
             children_nodes.append(ParentNode("ul", list_items))
             
-        elif block_to_block_type(block) == "ORDERED LIST":
+        elif block_to_block_type(block) == block_type_olist:
             list_items = []
             for line in block.split("\n"):
                 if re.match(r"\d+\.", line):
@@ -106,7 +124,7 @@ def markdown_to_html_node(markdown):
                     list_items.append(LeafNode("li", inline_html))
             children_nodes.append(ParentNode("ol", list_items))
             
-        elif block_to_block_type(block) == "PARAGRAPH":
+        elif block_to_block_type(block) == block_type_paragraph:
             inline_nodes = process_inline_text(block)     
             children_nodes.append(ParentNode("p", inline_nodes))
 
