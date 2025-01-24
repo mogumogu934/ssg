@@ -6,7 +6,7 @@ class HTMLNode:
         self.props = props
 
     def to_html(self):
-        raise NotImplementedError
+        raise NotImplementedError("Subclasses must implement this method")
 
     def props_to_html(self):
         if self.props is None:
@@ -37,7 +37,7 @@ class LeafNode(HTMLNode):
         super().__init__(tag=tag, value=value, children=None, props=props)
         
     def to_html(self):
-        if not self.value:
+        if not self.value and self.tag not in ["img", "br", "hr", "input"]:  # it's valid for these tags to have no value
             raise ValueError
         
         if self.tag is None:
@@ -50,21 +50,27 @@ class LeafNode(HTMLNode):
                 string = f'{prop}="{self.props[prop]}"'
                 strings.append(string)
             html_props = " ".join(strings)
+            
+        if self.tag in ["img", "br", "hr", "input"]:
+            return f'<{self.tag}{" " + html_props if html_props else ""} />'
+
         return f'<{self.tag}{" " + html_props if html_props else ""}>{self.value}</{self.tag}>'
 
 class ParentNode(HTMLNode):
     def __init__(self, tag, children, props=None):
         super().__init__(tag=tag, value=None, children=children, props=props)
+        self.children = children or []
         
     def to_html(self):
-        if self.tag is None:
-            raise ValueError("tag is None")
-        
-        if not self.children:
-            raise ValueError("missing value for children")
-        
-        strings = []
+        if not self.tag:
+            raise ValueError("A ParentNode must have a valid tag!")
+
+        html_children = []
         for child in self.children:
-            child_html = child.to_html()
-            strings.append(child_html)
-        return f'<{self.tag}>{"".join(strings)}</{self.tag}>'
+            if child and hasattr(child, 'to_html') and callable(child.to_html):
+                html_children.append(child.to_html())
+            else:
+                raise ValueError(f"Invalid child found: {child}")
+
+        children_html = ''.join(html_children)
+        return f'<{self.tag}>{children_html}</{self.tag}>'

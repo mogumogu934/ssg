@@ -45,13 +45,11 @@ class TestParentNode(unittest.TestCase):
             
     def test_no_children(self):
         node = ParentNode("p", children=[], props=None)
-        with self.assertRaises(ValueError):
-            node.to_html()
+        self.assertEqual(node.to_html(), '<p></p>')
     
     def test_none_children(self):
         node = ParentNode("div", None)
-        with self.assertRaises(ValueError):
-            node.to_html()
+        self.assertEqual(node.to_html(), '<div></div>')
             
     def test_one_child(self):
         node = ParentNode("div", [LeafNode("p", "text")])
